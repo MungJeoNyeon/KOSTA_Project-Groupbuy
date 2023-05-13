@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.project.mapper.CertificateMapper">
+
+	<sql id="certificateColumns">
+		cernum
+		, pnum
+		, cfile
+		, regdate
+		, userId
+		, title
+		, content
+		, deleteyn
+		, deletetime
+	</sql>
+	
+	<!-- 구매한 상품 인증 작성 --> <!-- 테스트 성공 -->
+	<insert id="insertCer" parameterType="CertificateDTO">
+		INSERT INTO certificate (
+			<include refid="certificateColumns"/>
+		) VALUES (
+			seq_cernum_no.nextval
+			, #{pnum}			<!-- #{pnum} -->
+			, 'null'
+			, sysdate
+			, #{userId}	<!-- #{userid} -->
+			, #{title}
+			, #{content}
+			, 'Y'			<!-- #{deleteyn} -->
+			, NULL			<!-- #{deletetime} -->
+		)
+	</insert>
+
+</mapper>

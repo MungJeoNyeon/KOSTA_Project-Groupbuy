@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+
+<html lang="ko" xmlns:th="http://thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="layouts/basic">
+<th:block layout:fragment="content" th:object="${postDTO}">
+	<!--  <div th:text="${ @point.getX() }"></div>-->
+	<div class="container-fluid">
+		<!-- Page Heading -->
+		<div class="d-sm-flex align-items-center justify-content-between mb-4">
+		</div>
+		<div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+			<h1 class="m-0 font-weight-bold text-gray-900" th:text="${postDTO.title}">거래명</h1>
+			<!-- 수정, 삭제 -->
+			<div class="float-right">
+				<a th:href="@{/main.do}" class="btn btn-default waves-effect waves-light">뒤로가기</a>
+				<a th:href="@{/write.do( pnum=${postDTO.pnum} )}" th:if="${postDTO.getLeaderid()} == ${#authentication.name}" class="btn btn-primary waves-effect waves-light">수정하기</a>
+				<button type="button" class="btn btn-danger waves-effect waves-light" th:if="${postDTO.getLeaderid()} == ${#authentication.name}" th:onclick="deletePost([[ ${postDTO.pnum} ]])">삭제하기</button>
+			</div>
+		</div>
+		<div class="row">
+			<!-- 이미지와 링크 -->
+			<div class="col-xl-4 col-lg-5">
+				<div class="card-detail-top shadow mb-4">
+					<!-- Card Body -->
+					<div class="card-body">
+						<div class="represent_img">
+							<img class="img-item" th:src="|@{uploadFile/}${postDTO.getPhoto()}|">
+						</div>
+						<!-- 글 내용 -->
+						<div class="">
+							<div class="card-detail-top mb-4">
+								<!-- Card Body -->
+								<div class="card-body">
+									<p>
+										<h7 class="m-0 font-weight-bold text-gray-900">구매 동네 </h7>
+										<text th:text="${leaderPlace}"></text>&ensp;<br>
+									</p>
+									<p>
+										<h7 class="m-0 font-weight-bold text-gray-900">글 내용 </h7>
+										<text th:text="${postDTO.getContent()}"></text> <br>
+									</p>
+									<p>
+										<h7 class="m-0 font-weight-bold text-gray-900">원가 </h7>
+										<text th:text="${postDTO.getPrice()}"></text>원 &nbsp;<br>
+										<h7 class="m-0 font-weight-bold text-gray-900">물품 개수 </h7>
+										<text th:text="${postDTO.getNumbers()}"></text> 개<br>
+									</p>
+									<div class="margin-bottom">
+										<p>
+											<h7 class="m-0 font-weight-bold text-gray-900">링크주소 </h7>
+											<a th:href="@{${postDTO.getLink()}}">바로가기</a>
+											<text th:text="${postDTO.getLink()}"></text>
+										</p>
+									</div>
+									<span class="m-0 font-weight-bold text-gray-900">작성 날짜 </span>
+									<text th:text="${#temporals.format(postDTO.getUploaddate(), 'yyyy-MM-dd HH:mm')}"></text>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- 거래 정보 -->
+			<div class="col-xl-8 col-lg-7">
+				<div class="card-detail-top shadow mb-4">
+					<!-- Card Body -->
+					<div class="card-body-nonauto">
+						<div class="horizon">
+							<div class="detail-top_info">
+								<p>
+									<h7 class="m-0 font-weight-bold text-primary bg-gray-100">
+										최대 구매가 </h7>
+									<text th:text="${postDTO.getPrice()}/${postDTO.getMinpeople()}"></text>
+									원&emsp;
+									<h7 class="m-0 font-weight-bold text-primary bg-gray-100">
+										최소 구매가 </h7>
+									<text th:text="${postDTO.getPrice()}/${postDTO.getMaxpeople()}"></text>
+									원
+									<br>
+								</p>
+								<p>
+									<h7 class="m-0 font-weight-bold text-primary bg-gray-100">최소인원</h7>
+									<text th:text="${postDTO.getMinpeople()}"></text>
+									명 &emsp;
+									<h7 class="m-0 font-weight-bold text-primary bg-gray-100">최대인원
+									</h7>
+									<text th:text="${postDTO.getMaxpeople()}"></text>
+									명
+								</p>
+								<p>
+									<h7 class="m-0 font-weight-bold text-primary bg-gray-100">
+										현재 인원수 </h7>
+									<text th:text="${countMember}"></text>
+									명
+									<h7 class="m-0 font-weight-bold text-primary bg-gray-100">
+										현재 예상 구매가 </h7>
+									<text th:text="${postDTO.getPrice()}/${countMember}"></text>
+									원<br>
+								</p>
+							</div>
+							<div class="detail-top_timer">
+								<h8>마감일:&emsp;
+									<span  th:text="${#temporals.format(postDTO.getEnddate(), 'yyyy-MM-dd')}"></span>
+								</h8><br><br>
+								<input type="hidden" id="enddate" th:value="${#temporals.format(postDTO.getEnddate(), 'yyyy-MM-dd HH:mm:ss')}">
+								<h9>남은 시간</h9>
+								<p><span id="timer" style="font-size: -webkit-xxx-large; color: red;"></span></p>
+							</div>
+						</div>
+						<div class="vertical">
+							<!-- 참여자 ready 영역 -->
+							<div class="detail-ready">
+								<!-- 방장 영역 -->
+								<div class="user-ready-img">
+									<div
+											class="text-gray-600 font-weight-bold bg-gray-100 align-center"
+											th:text="${postDTO.getLeaderid()}"
+									></div>
+									<img class="ready-img rounded-circle" src="img/undraw_profile.svg">
+									<a class="btn btn-primary-cap btn-icon-split"
+									   th:if="${minpeople == true} and ${postDTO.getLeaderid()} == ${#authentication.name}"
+									   th:onclick="insertCertification([[${postDTO.getPnum()}]], [[${postDTO.getTitle()}]], [[${postDTO.getContent()}]])"
+									>
+											<span class="icon text-white-50">
+												<i class="fas fa-flag"></i>
+											</span>
+										<span class="text">거래 완료하기</span>
+									</a>
+									<a class="btn btn-primary-cap btn-icon-split"
+									   th:unless="${postDTO.getLeaderid()} == ${#authentication.name} and ${minpeople == true}">
+											<span class="icon text-white-50">
+												<i class="fas fa-flag"></i>
+											</span>
+										<span class="text">방장</span>
+									</a>
+								</div>
+								<!-- 팀원 영역 -->
+								<div class="user-ready-img" th:each="teamMember: ${otherMemberList}">
+									<div
+											class="text-gray-600 font-weight-bold bg-gray-100 align-center"
+											th:text="${teamMember?.userid}"
+									></div>
+									<img class="ready-img rounded-circle"
+										 src="img/undraw_profile.svg">
+									<a th:href="@{/dealing}" class="btn btn-primary btn-icon-split" >
+										<span class="icon text-white-50">
+											<i class="fas fa-flag"></i>
+										</span>
+										<span class="text">참여중</span>
+									</a>
+								</div>
+							</div>
+							<!-- buttons -->
+							<button href="#" class="btn btn-primary btn-icon-split"
+									th:onclick="insertTeamMember( [[${postDTO.getPnum()}]], [[${postDTO.getMinpeople()}]], [[${postDTO.title}]], [[${postDTO.getPrice()}/${countMember}]] );">
+								<span class="icon text-white-50">
+									<i class="fas fa-flag"></i>
+								</span>
+								<span class="text">참여하기</span>
+							</button>
+
+							<button type="button" class="btn btn-info btn-icon-split"
+									data-toggle="modal" data-target=".bd-example-modal-xl">
+								<span class="icon text-white-50"> <i
+									class="fas fa-info-circle"></i>
+								</span> 중간 배송지 확인
+							</button>
+
+							<!--중간 배송지 모달창-->
+							<div class="modal fade bd-example-modal-xl" tabindex="-1"
+								role="dialog" aria-labelledby="myExtraLargeModalLabel"
+								aria-hidden="true">
+								<div class="modal-dialog modal-xl">
+									<div class="modal-content">
+										<div class="modal-header">
+											<h5 class="modal-title">중간 배송지 확인하기</h5>
+											
+											<button type="button" class="close" data-dismiss="modal"
+												aria-label="닫기">
+												<span aria-hidden="true">&times;</span>
+											</button>
+										</div>
+										<div class="modal-body">
+											<!--카카오맵 api 적용-->
+											<!-- 지도를 표시할 div 입니다 -->
+											<div id="map" style="width: 100%; height: 400px;"></div>
+
+											<script type="text/javascript"
+												src="//dapi.kakao.com/v2/maps/sdk.js?appkey=a87e58c3986f19fb7967a5efe62a5c7c&libraries=services"></script>
+											
+											<script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+											
+											<script th:inline="javascript">
+											/*<![CDATA[*/
+											
+												
+											/*
+											점이 여러개 일 때
+											*/
+											var latLngList = [ [37.655804, 127.024276] ,
+												[35.226257, 129.164313], [37.838326, 128.813553], [37.068658, 127.332371] ];
+											
+											//점이 3개 이상이면 => 산술평균
+											var sumLat=0.0;
+											var sumLng=0.0;
+											for(i in latLngList){
+												sumLat += latLngList[i][0];
+												sumLng += latLngList[i][1];
+												
+											}
+											var midLat = sumLat/latLngList.length;
+											var midLng = sumLng/latLngList.length;
+											
+											var minLatLng = function(lat1, lng1, lat2, lng2) {
+												this.lat1 = lat1;
+												this.lng1 = lng1;
+												this.lat2 = lat2;
+												this.lng2 = lng2;
+												//this.minus = lat1 + ( (lat2-lat1)/2 );
+												this.midLat = this.lat1 + (this.lat2 - this.lat1)/ 2;
+												this.midLng = this.lng1+ (this.lng2 - this.lng1)/ 2;
+
+												var LatLng = function(lat,lng) {
+													this.lat = lat;
+													this.lng = lng;
+													this.getLat = function() {
+														return this.lat;
+													}
+												}
+
+											}
+											/*]]>*/
+											</script>
+											
+											<script th:inline="javascript">
+											/*<![CDATA[*/
+											
+											
+											var userPointList= new Array();	//var userPointList=[];
+											
+											var nearCS2List = new Array(); //근처 편의점 객체들을 받을 리스트
+											
+											//thymeleaf class 접근 예제
+											var test = "[[ ${ @point.getX() } ]]";
+												//var test = "${ @point.getX() }";
+												//var pnum="[[${postDTO.getPnum()}]]";
+												//alert("test:"+test);
+											
+											
+											</script>
+
+											<script th:inline="javascript">
+												
+												// 중간 지점 마커가 표시될 위치입니다
+												var markerPosition;
+												
+												var mapContainer = document
+														.getElementById('map'), // 지도를 표시할 div
+												mapOption = {
+														//center:markerPosition,
+														/*산술평균*/
+													center : new kakao.maps.LatLng(
+															midLat, midLng),
+
+													//center: new kakao.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
+													level : 6
+												// 지도의 확대 레벨
+												};
+
+												// 지도를 표시할 div와  지도 옵션으로  지도를 생성합니다
+												var map = new kakao.maps.Map(mapContainer, mapOption);
+												var geocoder = new kakao.maps.services.Geocoder();	// 주소-좌표 변환 객체를 생성합니다
+												var arrAdd= new Array();	//user들의 address를 저장할 배열 선언
+												var arrId= new Array();		//user들의 id를 저장할 배열 선언
+												
+												
+												
+												function getInfo() {
+												    // 지도의 현재 중심좌표를 얻어옵니다 
+												    var center = map.getCenter();
+												    return center;
+												}
+												
+												/*
+												산술평균의 마커를 생성합니다.
+												
+												*/
+												/*addMarker(new kakao.maps.LatLng(
+														midLat, midLng), '산술 평균');
+												*/
+												
+												// 마커를 클릭하면 장소명을 표출할 인포윈도우 입니다
+												var infowindow = new kakao.maps.InfoWindow({zIndex:1});
+												
+												/*근처 편의점 찾기 start
+												*/
+												function getNearStore(){
+													
+													// 장소 검색 객체를 생성합니다
+													var ps = new kakao.maps.services.Places(map); 
+
+													// 카테고리로 은행을 검색합니다
+													ps.categorySearch('CS2', placesSearchCB, {
+														
+														x:map.getCenter().getLat(),
+														y:map.getCenter().getLng(),
+														useMapCenter:true
+													}); 
+												}
+												
+												var nearest;
+
+												// 키워드 검색 완료 시 호출되는 콜백함수 입니다
+												function placesSearchCB (data, status, pagination) {
+												    if (status === kakao.maps.services.Status.OK) {
+												        for (var i=0; i<data.length; i++) {
+												    
+												            nearCS2List.push(data[i]);
+												            
+												        }//for
+												        //console.log("편의점 검색 완료"+nearCS2List[0].distance+"m");//1470m
+												        var result=getNearest(nearCS2List);
+												        console.log(result.place_name+","+result.address_name+","+result.x+","+result.y);
+												        console.log("result.place_url"+result.place_url);
+												        addCS2Marker(new kakao.maps.LatLng(
+												        		result.y, result.x), result.place_name, result.place_url);
+												        
+												        
+												    }
+												}
+												function getNearest(nearCS2List){
+													
+													//distance가 가장 가까운 편의점 객체 반환
+													var nearNum=10000000000000;//초기화
+													var nearest;
+													
+													var i;
+													
+													for(i=0; i< nearCS2List.length; i++){
+														if(nearCS2List[i].distance < nearNum){
+															nearNum=nearCS2List[i].distance;
+															nearest=nearCS2List[i];
+														}
+														
+														//nearest = (nearCS2List[i].distance < nearest)? nearCS2List[i].distance:nearest;
+														console.log("현재 nearest ="+nearest.distance);
+													}
+												
+													return nearest;
+												}
+
+												// 지도에 마커를 표시하는 함수입니다
+												function displayMarker(place) {
+												    // 마커를 생성하고 지도에 표시합니다
+												    var marker = new kakao.maps.Marker({
+												        map: map,
+												        position: new kakao.maps.LatLng(place.y, place.x) 
+												    });
+
+												    // 마커에 클릭이벤트를 등록합니다
+												    kakao.maps.event.addListener(marker, 'click', function() {
+												        // 마커를 클릭하면 장소명이 인포윈도우에 표출됩니다
+												        infowindow.setContent('<div style="padding:5px;font-size:12px;">' + place.place_name + '</div>');
+												        infowindow.open(map, marker);
+												    });
+												}
+												
+												/*근처 편의점 찾기 end
+												*/
+
+												/*
+												선그어서 거리와 이동시간 구하기 st
+												*/
+												var drawingFlag = false; // 선이 그려지고 있는 상태를 가지고 있을 변수입니다
+												var moveLine; // 선이 그려지고 있을때 마우스 움직임에 따라 그려질 선 객체 입니다
+												var clickLine // 마우스로 클릭한 좌표로 그려질 선 객체입니다
+												var distanceOverlay; // 선의 거리정보를 표시할 커스텀오버레이 입니다
+												var dots = {}; // 선이 그려지고 있을때 클릭할 때마다 클릭 지점과 거리를 표시하는 커스텀 오버레이 배열입니다.
+
+												// 지도에 클릭 이벤트를 등록합니다
+												// 지도를 클릭하면 선 그리기가 시작됩니다 그려진 선이 있으면 지우고 다시 그립니다
+												kakao.maps.event.addListener(map, 'click', function(mouseEvent) {
+
+												    // 마우스로 클릭한 위치입니다 
+												    var clickPosition = mouseEvent.latLng;
+
+												    // 지도 클릭이벤트가 발생했는데 선을 그리고있는 상태가 아니면
+												    if (!drawingFlag) {
+
+												        // 상태를 true로, 선이 그리고있는 상태로 변경합니다
+												        drawingFlag = true;
+												        
+												        // 지도 위에 선이 표시되고 있다면 지도에서 제거합니다
+												        deleteClickLine();
+												        
+												        // 지도 위에 커스텀오버레이가 표시되고 있다면 지도에서 제거합니다
+												        deleteDistnce();
+
+												        // 지도 위에 선을 그리기 위해 클릭한 지점과 해당 지점의 거리정보가 표시되고 있다면 지도에서 제거합니다
+												        deleteCircleDot();
+												    
+												        // 클릭한 위치를 기준으로 선을 생성하고 지도위에 표시합니다
+												        clickLine = new kakao.maps.Polyline({
+												            map: map, // 선을 표시할 지도입니다 
+												            path: [clickPosition], // 선을 구성하는 좌표 배열입니다 클릭한 위치를 넣어줍니다
+												            strokeWeight: 3, // 선의 두께입니다 
+												            strokeColor: '#db4040', // 선의 색깔입니다
+												            strokeOpacity: 1, // 선의 불투명도입니다 0에서 1 사이값이며 0에 가까울수록 투명합니다
+												            strokeStyle: 'solid' // 선의 스타일입니다
+												        });
+												        
+												        // 선이 그려지고 있을 때 마우스 움직임에 따라 선이 그려질 위치를 표시할 선을 생성합니다
+												        moveLine = new kakao.maps.Polyline({
+												            strokeWeight: 3, // 선의 두께입니다 
+												            strokeColor: '#db4040', // 선의 색깔입니다
+												            strokeOpacity: 0.5, // 선의 불투명도입니다 0에서 1 사이값이며 0에 가까울수록 투명합니다
+												            strokeStyle: 'solid' // 선의 스타일입니다    
+												        });
+												    
+												        // 클릭한 지점에 대한 정보를 지도에 표시합니다
+												        displayCircleDot(clickPosition, 0);
+
+												            
+												    } else { // 선이 그려지고 있는 상태이면
+
+												        // 그려지고 있는 선의 좌표 배열을 얻어옵니다
+												        var path = clickLine.getPath();
+
+												        // 좌표 배열에 클릭한 위치를 추가합니다
+												        path.push(clickPosition);
+												        
+												        // 다시 선에 좌표 배열을 설정하여 클릭 위치까지 선을 그리도록 설정합니다
+												        clickLine.setPath(path);
+
+												        var distance = Math.round(clickLine.getLength());
+												        displayCircleDot(clickPosition, distance);
+												    }
+												});
+												    
+												// 지도에 마우스무브 이벤트를 등록합니다
+												// 선을 그리고있는 상태에서 마우스무브 이벤트가 발생하면 그려질 선의 위치를 동적으로 보여주도록 합니다
+												kakao.maps.event.addListener(map, 'mousemove', function (mouseEvent) {
+
+												    // 지도 마우스무브 이벤트가 발생했는데 선을 그리고있는 상태이면
+												    if (drawingFlag){
+												        
+												        // 마우스 커서의 현재 위치를 얻어옵니다 
+												        var mousePosition = mouseEvent.latLng; 
+
+												        // 마우스 클릭으로 그려진 선의 좌표 배열을 얻어옵니다
+												        var path = clickLine.getPath();
+												        
+												        // 마우스 클릭으로 그려진 마지막 좌표와 마우스 커서 위치의 좌표로 선을 표시합니다
+												        var movepath = [path[path.length-1], mousePosition];
+												        moveLine.setPath(movepath);    
+												        moveLine.setMap(map);
+												        
+												        var distance = Math.round(clickLine.getLength() + moveLine.getLength()), // 선의 총 거리를 계산합니다
+												            content = '<div class="dotOverlay distanceInfo">총거리 <span class="number">' + distance + '</span>m</div>'; // 커스텀오버레이에 추가될 내용입니다
+												        
+												        // 거리정보를 지도에 표시합니다
+												        showDistance(content, mousePosition);   
+												    }             
+												});                 
+
+												// 지도에 마우스 오른쪽 클릭 이벤트를 등록합니다
+												// 선을 그리고있는 상태에서 마우스 오른쪽 클릭 이벤트가 발생하면 선 그리기를 종료합니다
+												kakao.maps.event.addListener(map, 'rightclick', function (mouseEvent) {
+
+												    // 지도 오른쪽 클릭 이벤트가 발생했는데 선을 그리고있는 상태이면
+												    if (drawingFlag) {
+												        
+												        // 마우스무브로 그려진 선은 지도에서 제거합니다
+												        moveLine.setMap(null);
+												        moveLine = null;  
+												        
+												        // 마우스 클릭으로 그린 선의 좌표 배열을 얻어옵니다
+												        var path = clickLine.getPath();
+												    
+												        // 선을 구성하는 좌표의 개수가 2개 이상이면
+												        if (path.length > 1) {
+
+												            // 마지막 클릭 지점에 대한 거리 정보 커스텀 오버레이를 지웁니다
+												            if (dots[dots.length-1].distance) {
+												                dots[dots.length-1].distance.setMap(null);
+												                dots[dots.length-1].distance = null;    
+												            }
+
+												            var distance = Math.round(clickLine.getLength()), // 선의 총 거리를 계산합니다
+												                content = getTimeHTML(distance); // 커스텀오버레이에 추가될 내용입니다
+												                
+												            // 그려진 선의 거리정보를 지도에 표시합니다
+												            showDistance(content, path[path.length-1]);  
+												             
+												        } else {
+
+												            // 선을 구성하는 좌표의 개수가 1개 이하이면 
+												            // 지도에 표시되고 있는 선과 정보들을 지도에서 제거합니다.
+												            deleteClickLine();
+												            deleteCircleDot(); 
+												            deleteDistnce();
+
+												        }
+												        
+												        // 상태를 false로, 그리지 않고 있는 상태로 변경합니다
+												        drawingFlag = false;          
+												    }  
+												});    
+
+												// 클릭으로 그려진 선을 지도에서 제거하는 함수입니다
+												function deleteClickLine() {
+												    if (clickLine) {
+												        clickLine.setMap(null);    
+												        clickLine = null;        
+												    }
+												}
+
+												// 마우스 드래그로 그려지고 있는 선의 총거리 정보를 표시하거
+												// 마우스 오른쪽 클릭으로 선 그리가 종료됐을 때 선의 정보를 표시하는 커스텀 오버레이를 생성하고 지도에 표시하는 함수입니다
+												function showDistance(content, position) {
+												    
+												    if (distanceOverlay) { // 커스텀오버레이가 생성된 상태이면
+												        
+												        // 커스텀 오버레이의 위치와 표시할 내용을 설정합니다
+												        distanceOverlay.setPosition(position);
+												        distanceOverlay.setContent(content);
+												        
+												    } else { // 커스텀 오버레이가 생성되지 않은 상태이면
+												        
+												        // 커스텀 오버레이를 생성하고 지도에 표시합니다
+												        distanceOverlay = new kakao.maps.CustomOverlay({
+												            map: map, // 커스텀오버레이를 표시할 지도입니다
+												            content: content,  // 커스텀오버레이에 표시할 내용입니다
+												            position: position, // 커스텀오버레이를 표시할 위치입니다.
+												            xAnchor: 0,
+												            yAnchor: 0,
+												            zIndex: 3  
+												        });      
+												    }
+												}
+
+												// 그려지고 있는 선의 총거리 정보와 
+												// 선 그리가 종료됐을 때 선의 정보를 표시하는 커스텀 오버레이를 삭제하는 함수입니다
+												function deleteDistnce () {
+												    if (distanceOverlay) {
+												        distanceOverlay.setMap(null);
+												        distanceOverlay = null;
+												    }
+												}
+
+												// 선이 그려지고 있는 상태일 때 지도를 클릭하면 호출하여 
+												// 클릭 지점에 대한 정보 (동그라미와 클릭 지점까지의 총거리)를 표출하는 함수입니다
+												function displayCircleDot(position, distance) {
+
+												    // 클릭 지점을 표시할 빨간 동그라미 커스텀오버레이를 생성합니다
+												    var circleOverlay = new kakao.maps.CustomOverlay({
+												        content: '<span class="dot"></span>',
+												        position: position,
+												        zIndex: 1
+												    });
+
+												    // 지도에 표시합니다
+												    circleOverlay.setMap(map);
+
+												    if (distance > 0) {
+												        // 클릭한 지점까지의 그려진 선의 총 거리를 표시할 커스텀 오버레이를 생성합니다
+												        var distanceOverlay = new kakao.maps.CustomOverlay({
+												            content: '<div class="dotOverlay">거리 <span class="number">' + distance + '</span>m</div>',
+												            position: position,
+												            yAnchor: 1,
+												            zIndex: 2
+												        });
+
+												        // 지도에 표시합니다
+												        distanceOverlay.setMap(map);
+												    }
+
+												    // 배열에 추가합니다
+												    dots.push({circle:circleOverlay, distance: distanceOverlay});
+												}
+
+												// 클릭 지점에 대한 정보 (동그라미와 클릭 지점까지의 총거리)를 지도에서 모두 제거하는 함수입니다
+												function deleteCircleDot() {
+												    var i;
+
+												    for ( i = 0; i < dots.length; i++ ){
+												        if (dots[i].circle) { 
+												            dots[i].circle.setMap(null);
+												        }
+
+												        if (dots[i].distance) {
+												            dots[i].distance.setMap(null);
+												        }
+												    }
+
+												    dots = [];
+												}
+
+												// 마우스 우클릭 하여 선 그리기가 종료됐을 때 호출하여 
+												// 그려진 선의 총거리 정보와 거리에 대한 도보, 자전거 시간을 계산하여
+												// HTML Content를 만들어 리턴하는 함수입니다
+												function getTimeHTML(distance) {
+
+												    // 도보의 시속은 평균 4km/h 이고 도보의 분속은 67m/min입니다
+												    var walkkTime = distance / 67 | 0;
+												    var walkHour = '', walkMin = '';
+
+												    // 계산한 도보 시간이 60분 보다 크면 시간으로 표시합니다
+												    if (walkkTime > 60) {
+												        walkHour = '<span class="number">' + Math.floor(walkkTime / 60) + '</span>시간 '
+												    }
+												    walkMin = '<span class="number">' + walkkTime % 60 + '</span>분'
+
+												    // 자전거의 평균 시속은 16km/h 이고 이것을 기준으로 자전거의 분속은 267m/min입니다
+												    var bycicleTime = distance / 227 | 0;
+												    var bycicleHour = '', bycicleMin = '';
+
+												    // 계산한 자전거 시간이 60분 보다 크면 시간으로 표출합니다
+												    if (bycicleTime > 60) {
+												        bycicleHour = '<span class="number">' + Math.floor(bycicleTime / 60) + '</span>시간 '
+												    }
+												    bycicleMin = '<span class="number">' + bycicleTime % 60 + '</span>분'
+
+												    // 거리와 도보 시간, 자전거 시간을 가지고 HTML Content를 만들어 리턴합니다
+												    var content = '<ul class="dotOverlay distanceInfo">';
+												    content += '    <li>';
+												    content += '        <span class="label">총거리</span><span class="number">' + distance + '</span>m';
+												    content += '    </li>';
+												    content += '    <li>';
+												    content += '        <span class="label">도보</span>' + walkHour + walkMin;
+												    content += '    </li>';
+												    content += '    <li>';
+												    content += '        <span class="label">자전거</span>' + bycicleHour + bycicleMin;
+												    content += '    </li>';
+												    content += '</ul>'
+
+												    return content;
+												}
+												
+												/*
+												선그어서 거리와 이동시간 구하기 end
+												*/
+
+												/*
+											    user주소와 id로 위경도 변환 -> 중심 좌표 구하기(ajax) -> 중심 좌표의 주소 구하기 -> 중심 좌표의 마커 생성 & 중심좌표의 주소 db insert(ajax) 
+											    */
+												
+												
+											    /*[# th:each="page : ${teamMemberList}"]*/
+											     
+											        var ad =  "[( ${page.getAddress()} )]" ;
+											        var id = /*[[${page.getUserid()}]]*/;
+											        arrAdd.push(ad);
+											        arrId.push(id);
+											        
+											    /*[/]*/
+											    
+											   
+											    console.log("arr"+arrAdd);
+											    console.log("arr"+arrId);
+			                                 
+												//user들의 주소와 id를 받아서 maker를 생성
+												usersMarkers(arrAdd,arrId);
+												
+												//users 마커 : 주소 -> 위경도
+												function usersMarkers(addressList, nameList){
+													
+													//let maps = [];
+													let position = [];
+													const geocoder = new kakao.maps.services.Geocoder();
+													const addressSearch = address => {
+													    return new Promise((resolve, reject) => {
+													    	//console.log("address"+address);
+													        geocoder.addressSearch(address, function(result, status) {
+													            if (status === kakao.maps.services.Status.OK) {
+													                resolve({result});
+													            } else {
+													                reject(status);
+													            }
+													        });
+													    });
+													};
+													
+													(async () => {
+													    try{
+													        for(const [i,addr] of addressList.entries()) {
+													       		
+													            const data = await addressSearch(addr);
+													            coords = new kakao.maps.LatLng(data.result[0].y, data.result[0].x);
+													            
+													            console.log(">>user coord>>"+coords);//여기까지는 들어옴
+													            //getAddressByLatLng(coords);
+													       
+													            var userP= {
+													            		
+													            		idx: i,
+													            		x : data.result[0].x,
+													            		y : data.result[0].y
+													            
+													            };
+													            
+													            userPointList.push(userP);
+													            
+													            if(i === addressList.length-1){	//만약 현재 index i가 배열의 크기보다 작다면,
+													            
+													            	getMidPointByList(userPointList);	//그때 ajax 통신으로 user의 좌표리스트를 넘겨준다.
+													            	
+													            }
+													            
+													            //getAddressByLatLng(coords);
+													            
+													            //마커 생성
+													            addMarker(coords,nameList[i]);
+													            
+													            //주소 좌표와 생성한 지도 객체를 배열에 담아줍니다.
+													            position.push(coords);
+													            
+													            //map.relayout();
+													           
+													        }
+													    } catch(e) {
+													        console.error(e);
+													    }
+													})();
+												}//function usersMarkers
+												
+												var centerAdd;
+												/*
+												중심으로 선정된 위도 경도로 => 도로명 주소
+												*/
+												function getAddressByLatLng(coord){
+													
+													const coord2Address = coord => {
+														//Promise반환
+													    return new Promise((resolve, reject) => {
+													        geocoder.coord2Address(coord.getLng(), coord.getLat(), function(result, status) {
+													        	//alert("status"+status);//if Zero result: 정상적으로 응답을 받았으나 결과가 없음.
+													            if (status === kakao.maps.services.Status.OK) {
+													       
+													                resolve({result});
+													            } else {
+													            	alert("promise함수 실행 안됨");
+													                reject(status);
+													            }
+													        });
+													    });
+													};
+													
+													(async () => {
+													    try{
+													    	
+													    	const data = await coord2Address(coord);//coord2Address가 이행될 때까지 await. async함수에서만 사용
+													   
+													    	//주소정보로 maker생성
+													    	centerAdd=data.result[0].address.address_name;
+													    	
+													    	//중심 좌표로 db업데이트
+													    	addMidAddressToDB(centerAdd);
+													    	
+															centerMarker(coord,data.result[0].address.address_name);
+													    	
+													    } catch(e) {
+													        console.error(e);//여기서 에러
+													    }
+													})();
+												
+												}//getAddressByLatLng
+												
+												
+												// 마커를 생성하고 지도위에 표시하는 함수입니다
+												function addMarker(position, title) {
+													
+													console.log(">>중심좌표>>"+position);
+									
+													// 마커를 생성합니다
+													var marker = new kakao.maps.Marker(
+															{
+																position : position
+															});
+
+													console.log("포지션" + position);
+													
+													// 인포윈도우로 장소에 대한 설명을 표시합니다
+													
+										            var infowindow = new kakao.maps.InfoWindow({
+										            	disableAutoPan: true,//지도가 이동되지 않도록 설정
+										                position: position,
+										                content: '<div style="width:150px;text-align:center;padding:5px;font-size:12px;">'+title+'</div>'
+										                
+										            });
+													
+										            infowindow.open(map, marker);
+										            
+													// 마커가 지도 위에 표시되도록 설정합니다
+													marker.setMap(map);
+											
+												}//addMarker
+												
+												// 편의점 마커를 생성하고 지도위에 표시하는 함수입니다
+												function addCS2Marker(position, title, url) {
+													
+													var imageSrc = 'assets/img/cs2store.png', // 마커이미지의 주소입니다    
+												    imageSize = new kakao.maps.Size(64, 69), // 마커이미지의 크기입니다
+												    imageOption = {offset: new kakao.maps.Point(27, 69)}; // 마커이미지의 옵션입니다. 마커의 좌표와 일치시킬 이미지 안에서의 좌표를 설정합니다.
+
+													// 마커의 이미지정보를 가지고 있는 마커이미지를 생성합니다
+													var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+			
+													// 마커를 생성합니다
+													var marker = new kakao.maps.Marker(
+															{
+																position : position,
+																image: markerImage
+															});
+
+													
+													var content = '<div class="wrap2">' + 
+											            '    <div class="info" style="margin-top: 1px; background-color: #fff;">' + 
+											            
+											            '        <div class="body">' + 
+											            '            <div class="desc">' + 
+											            '                <div class="ellipsis">가장 가까운 편의점 : '+title+'</div>' + 
+											           
+											            '                <div><a href='+url+ ' style="color:blue" target="_blank">상세보기</a></div>'+
+											            '            </div>' + 
+											            '        </div>' + 
+											            '    </div>' +    
+											            '</div>';
+
+												
+													// 마커가 지도 위에 표시되도록 설정합니다
+													marker.setMap(map);
+													
+													// 커스텀 오버레이를 생성합니다
+													var customOverlay = new kakao.maps.CustomOverlay({
+													    position: position,
+													    content: content   
+													});
+
+													// 커스텀 오버레이를 지도에 표시합니다
+													customOverlay.setMap(map);
+
+													
+												}//addMarker
+												
+											
+												var imageSrc = 'assets/img/cust_marker-01.png';//, // 마커이미지의 주소입니다    
+											    var	imageSize = new kakao.maps.Size(69, 74);//, // 마커이미지의 크기입니다
+											    var imageOption = {offset: new kakao.maps.Point(27, 69)}; // 마커이미지의 옵션입니다. 마커의 좌표와 일치시킬 이미지 안에서의 좌표를 설정합니다.
+											      
+											 	// 마커의 이미지정보를 가지고 있는 마커이미지를 생성합니다
+											    var markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+											   
+												var overlay; 
+												//중심마커를 생성하고 인포윈도우를 설정하는 함수입니다
+												function centerMarker(coord,text){
+												
+													// 마커를 생성합니다
+													var marker = new kakao.maps.Marker(
+															{
+																clickable: true,
+																position : coord,
+																image: markerImage 
+																
+															});
+													var string = "https://map.kakao.com/link/to/"+text.replace(/ /g,"")+','+coord.getLat()+','+coord.getLng();
+													
+													var content = '<div class="wrap">' + 
+													            '    <div class="info" style="margin-top: 1px; background-color: #fff;">' + 
+													            '        <div class="title">' + 
+													            '            알고리즘 중간지점' + 
+													            '            <div class="close" onclick="closeOverlay()" title="닫기"></div>' + 
+													            '        </div>' + 
+													            '        <div class="body">' + 
+													       
+													            '            <div class="desc">' + 
+													            '                <div class="ellipsis">중간 위치 주소:'+text+'</div>' + 
+													            
+													            '                <div><a href="https://map.kakao.com/link/to/'+ text.replace(/ /g,"") +','+coord.getLat()+','+coord.getLng()+'"'+'>카카오 길찾기</a></div>'+
+													            '            </div>' + 
+													            '        </div>' + 
+													            '    </div>' +    
+													            '</div>';
+													
+													// 마커 위에 커스텀오버레이를 표시합니다
+													// 마커를 중심으로 커스텀 오버레이를 표시하기위해 CSS를 이용해 위치를 설정했습니다
+													
+													
+													overlay = new kakao.maps.CustomOverlay({
+													    content: content,
+													    map: map,
+													    clickable: true,
+													    position: marker.getPosition()       
+													});
+												
+													
+													// 마커를 클릭했을 때 커스텀 오버레이를 표시합니다
+													kakao.maps.event.addListener(marker, 'click', function() {
+													    overlay.setMap(map);
+													   
+													});
+													
+													
+													// 마커가 지도 위에 표시되도록 설정합니다
+													marker.setMap(map);
+
+													
+												}
+												// 커스텀 오버레이를 닫기 위해 호출되는 함수입니다 
+												function closeOverlay() {
+												    overlay.setMap(null);   
+												   
+												}
+												
+									
+												// 지도를 표시하는 div 크기를 변경하는 함수입니다
+												function resizeMap() {
+													var mapContainer = document
+															.getElementById('map');
+													mapContainer.style.width = '1050px';
+													mapContainer.style.height = '680px';
+												}
+										
+												function relayout() {
+
+													// 지도를 표시하는 div 크기를 변경한 이후 지도가 정상적으로 표출되지 않을 수도 있습니다
+													// 크기를 변경한 이후에는 반드시  map.relayout 함수를 호출해야 합니다
+													// window의 resize 이벤트에 의한 크기변경은 map.relayout 함수가 자동으로 호출됩니다
+													map.relayout();
+												}
+												
+											  var pnum="[[${postDTO.getPnum()}]]";
+											  //alert(pnum);
+											  
+											  
+											  /*
+											   ajax 통신 코드 start
+											  */
+											  function addMidAddressToDB(address) {
+											     $.ajax({
+											         type : "GET",
+											         url : "/alterDealAdd.do?address="+address+"&pnum="+pnum,// "${pageContext.request.contextPath }/${blogUser.id}/main/addReply"
+											         contentType: "application/json",
+											         dataType: "json",
+											         success : function (data, status) {
+											            alert(status);
+											         },
+											         error : function (status) {
+											            //alert(status + "error!");
+											            //alert("pnum"+"${postDTO.getPnum()}");
+											         }
+											     });
+											  }
+											  
+											  function alterMapCenter(latlng){
+												  map.setCenter(latlng);
+											  }
+											  
+											  function getMidPointByList(plist) {//plist는 2차원 배열
+												  //plist->json 변환
+												  //const JsonArray = JSON.stringify(plist);//문자 2차원배열
+												  //console.log(">>>>>JsonArray>>>>>"+JsonArray);
+												  
+													 $.ajax({
+													     method: 'post',
+													     url: '/getMidPoint', //controller url
+													     traditional: true,
+													     data: {
+													       data: JSON.stringify(plist)
+													     },
+													     dataType: 'json',
+													     success: function (args) {
+													    	 
+													    	 var r= args.res;//Object
+													    	 
+													    	//중심 마커 생성 => getAddressByLatLng 호출
+													    	markerPosition=new kakao.maps.LatLng( r.y, r.x);
+													    	
+													    	//console.log("getMidPointByList>markerPosition: "+markerPosition);
+															getAddressByLatLng(markerPosition);
+															
+															alterMapCenter(markerPosition);//계산된 중심 좌표로 map Center변경
+															getNearStore();//센터 중심으로 근처 편의점 마커들 띄우기
+															
+															var two=args.two;//Point object
+															
+															addMarker(new kakao.maps.LatLng(
+																	two.y, two.x), '알고리즘2');
+															
+													        if (args.res) {
+													          //alert("완료 되었습니다");
+													        }
+													     }
+													   });//ajax
+													   
+												  
+												  }//function
+												  
+												  /*
+												  중심좌표를 기준으로 가장 가까운 편의점의 좌표를 찾는 함수
+												  */
+												  function getNearCS2(cs2List, centerP) {//plist는 2차원 배열
+													  
+													  alert("function");
+													  alert(cs2List);//중심좌표 (36.75311796728473, 128.09079297772118)
+												  	  alert(centerP);//object배열 [object Object],[object Object],[object Object],
+													  //plist->json 변환
+													  //const JsonArray = JSON.stringify(plist);//문자 2차원배열
+													  //console.log(">>>>>JsonArray>>>>>"+JsonArray);
+													  
+														 $.ajax({
+														     method: 'post',
+														     url: '/getNearCS2', //controller url
+														     traditional: true,
+														     data: {
+														       data: JSON.stringify(cs2List),
+														       center: centerP
+														     },
+														     dataType: 'json',
+														     success: function (args) {
+														    	 alert("ajax통신 완료");
+														    	 //var r= args.res;//Object
+													
+														     }
+														   });//ajax
+													  }//function
+													  
+													  /*
+													   ajax 통신 코드 end
+													  */
+											  /*]]>*/
+											</script>
+										</div>
+										<div class="modal-footer">
+											<h8 class="modal-title" style="color:red;">지도를 클릭해서 거리와 이동시간을 확인할 수 있어요 *end: 오른쪽 마우스 버튼</h8>
+											<button type="button" class="btn btn-secondary"
+												data-dismiss="modal">닫기</button>
+											<button type="button" class="btn btn-primary">카카오맵으로
+												확인하기</button>
+										</div>
+
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- row -->
+
+
+		<div class="row">
+			<div class="col-xl-12">
+				<div class="row d-flex justify-content-center">
+					<div class="col-md-12" >
+						<div class="card shadow-0 border" style="background-color: #f0f2f5;" >
+							<div class="text-center" style="padding-top: 10px;">
+								<h3 th:text="${postDTO.getTitle()} + ' 공동구매 채팅방 입니다.'"></h3>
+							</div>
+
+							<div class="card-body p-4" style="height: 500px; overflow: scroll; ">
+								<div class="card mb-4" th:each="comment: ${commentList}">
+									<div class="card-body" th:if="${not #lists.isEmpty(commentList)}">
+										<p th:text="${comment.comments}"></p>
+
+										<div class="d-flex justify-content-between">
+											<div class="d-flex flex-row align-items-center">
+												<img class="rounded-circle" src="img/undraw_profile_1.svg"
+													 alt="avatar" width="25" height="25" />
+												<p class="small mb-0 ms-2"
+                                                   th:if="${comment.writer} == ${#authentication.name}"
+                                                   th:text="${comment.writer}" style="padding-left: 3px; font-weight: bold; color: #36b9cc; "></p> <!--th:text="${comment.writer}"-->
+                                                <p class="small mb-0 ms-2"
+                                                   th:unless="${comment.writer} == ${#authentication.name}"
+                                                   th:text="${comment.writer}" style="padding-left: 3px;"></p>
+											</div>
+											<div class="d-flex flex-row align-items-center">
+												<p class="small text-muted mb-0" th:text="${#temporals.format(comment.regDate, 'yyyy-MM-dd:HH:mm')}"></p> <!--th:text="${comment.regDate}"-->
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<form class="form-outline mb-4" id="commentForm" style="padding-top: 20px;" th:action="@{/comments.do}" th:object="${comment}" method="post">
+								<input th:field="*{comments}" type="text" id="addANote" class="form-control" placeholder="Type comment..." /> <!--th:field="*{comments}"-->
+								<input type="hidden" th:name="pnum" th:value="${postDTO.getPnum()}"/>
+							</form>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- row -->
+			<div class="detail_top_top" style="margin-top: 100px; margin-bottom: 50px; font-size: x-large;" th:text="${postDTO.getTitle()}+'에 관심있으신 분들이 자주 보는 상품들이에요 👀'"></div>
+			<div class="col-lg-3 mb-2" th:if="${not #lists.isEmpty( recommendPostList )}" th:each="recommendPostList : ${recommendPostList}">
+				<div class="card bg-light text-black shadow">
+					<div class="card-body" th:each="recommendPostList : ${recommendPostList}">
+						<div class="text-black-50 small" th:text="${recommendPostList.title}"></div>
+						<div class="represent_img">
+							<img class="card-img-top" id="photo" name="photo" style="width: 225px; height:200px;"
+								 th:src="|@{uploadFile/}${recommendPostList.getPhoto()}|">
+						</div>
+					</div>
+					<a th:href="@{/detail.do( pnum=${recommendPostList.getPnum()} )}"
+					   class="btn btn-primary">
+						상세보기
+					</a>
+				</div>
+			</div>
+			<div class="col-lg-6 mb-4" th:unless="${not #lists.isEmpty( recommendPostList )}">
+				<div class="card bg-light text-black shadow">
+					<div class="card-body">
+						<h5>찜하기가 부족해서 분석을 완료하지 못했습니다...</h5>
+					</div>
+				</div>
+			</div>
+	</div>
+	<!-- /.container-fluid -->
+</th:block>
+<th:block layout:fragment="script">
+	<script th:inline="javascript">
+		/*<![CDATA[*/
+		function insertCertification(pnum, title, content){
+			var userId = [[${#authentication.name}]];
+			$.ajax({
+				type: 'POST',
+				url: '/cerwrite.do',
+				data: {
+					userId: userId,
+					pnum: pnum,
+					title: title,
+					content: content
+				},
+				success: function (){
+					alert("상품 거래가 완료되었습니다!");
+
+				}, error: function (){
+					alert("상품 거래 등록 오류... 다시 시도해주세요");
+				}
+			})
+		}
+
+		function insertTeamMember(pnum, minpeople, dealName, money) {
+			confirm(dealName+ "공동구매에 참여하실건가요?");
+			var userId = [[${#authentication.name}]];
+			$.ajax({
+				type: 'POST',
+				url: '/checkTeamMember',
+				dataType: 'json',
+				data: {
+					userId: userId,
+					pnum: pnum
+				},
+				success: function (result){
+					if(result == 1){
+						alert("이미 참가하신 공동구매 입니다!");
+					} else {
+						var uri1 = /*[[ @{/team.do} ]]*/null;
+						var html = "";
+						html += '<form name="dataForm1" id="a" action="'+uri1+'" method="post">';
+						html += '<input type="hidden" name="pnum" value="'+pnum+'" />';
+						html += '<input type="hidden" name="minpeople" value="'+minpeople+'">';
+						html += '</form>';
+						var uri2 =  /*[[ @{/account.do} ]]*/null;
+						html += '<form name="dataForm2" id="b" action="'+uri2+'" method="post">';
+						html += '<input type="hidden" name="pnum" value="'+pnum+'" />';
+						html += '<input type="hidden" name="dealName" value="'+dealName+'" />';
+						html += '<input type="hidden" name="money" value="'+money+'" >';
+						html += '</form>';
+						$("body").append(html);
+						var formData = $("#a, #b").serializeArray();
+						console.log(formData);
+						$.ajax({
+							type: 'POST',
+							url: '/team.do',
+							data: {
+								pnum: formData[0]["value"],
+								minpeople: formData[1]["value"]
+							},
+							success: function (result){
+								console.log("ㅇㅇ");
+								// console.log(formData);
+								document.location.href = document.location.href;
+								console.log
+							},
+							error: function (result){
+								console.log("ㅡㅡ");
+							}
+						});
+						$.ajax({
+							type: 'POST',
+							url: '/account.do',
+							data: {
+								pnum: formData[2]["value"],
+								dealName: formData[3]["value"],
+								money: formData[4]["value"]
+							},
+							success: function (result){
+								console.log("ㅇㅇ2");
+								// console.log(formData);
+								document.location.href = document.location.href;
+							},
+							error: function (result){
+								console.log("ㅡㅡ2");
+							}
+						})
+					}
+				}
+			})
+		}
+
+		$("#commentForm").submit(function (e){
+			// console.log("Tq");
+			// var pnum = $('.pnum').val();
+			// var comments = $('.form-control').val();
+			// $.ajax({
+			// 	type: 'POST',
+			// 	url: '/comments.do',
+			// 	dataType: 'json',
+			// 	data:{
+			// 		pnum: pnum,
+			// 		comments: comments
+			// 	},
+			// 	success: function (){
+					var html = "";
+					html += '<div className="card-body" th:if="${not #lists.isEmpty(commentList)}">';
+					html += '<p th:text="${comment.comments}"></p>';
+					html += '<div className="d-flex justify-content-between">';
+					html += '<div className="d-flex flex-row align-items-center">';
+					html += '<img className="rounded-circle" src="img/undraw_profile_1.svg" alt="avatar" width="25" height="25"/>';
+					html += '<p className="small mb-0 ms-2" th:if="${comment.writer} == ${#authentication.name}" th:text="${comment.writer}" style="padding-left: 3px; font-weight: bold; color: #36b9cc; "></p>';
+					html += '<p className="small mb-0 ms-2" th:unless="${comment.writer} == ${#authentication.name}" th:text="${comment.writer}" style="padding-left: 3px;"></p>';
+					html += '</div>';
+					html += '<div className="d-flex flex-row align-items-center">';
+					html += '<p className="small text-muted mb-0" th:text="${#temporals.format(comment.regDate, \'yyyy-MM-dd:HH:mm\')}"></p>';
+					html += '</div>';
+					html += '</div>';
+					html += '</div>';
+					$(".card mb-4").append(html);
+			// 	},
+			// 	error: function (){
+			// 		alert("채팅 등록 실패! 다시 시도해주세요");
+			// 	}
+			// })
+		});
+
+		function convertStringToDate(endDate) {
+			let dateComponents = endDate.split(' ');
+			let datePieces = dateComponents[0].split("-");
+			let timePieces = dateComponents[1].split(":");
+			return(new Date(datePieces[0], (datePieces[1] - 1), datePieces[2],
+					timePieces[0], timePieces[1], timePieces[2]))
+		}
+		//var endDate = $("#enddate").text();
+		var endDate = convertStringToDate($("#enddate").val());
+		console.log("endDate: ", endDate);
+		var startDatetime = new Date();
+		console.log("startDatetime: ", startDatetime);
+		var RemainDate = endDate - startDatetime;
+		console.log("RemainDate: ",RemainDate);
+		const timerId = document.querySelector('#timer');
+		function msg_time() {
+			var days = Math.floor((RemainDate / (1000 * 60 * 60 * 24)));
+			var hours = Math.floor((RemainDate % (1000 * 60 * 60 * 24)) / (1000*60*60));
+			var miniutes = Math.floor((RemainDate % (1000 * 60 * 60)) / (1000*60));
+			var seconds = Math.floor((RemainDate % (1000 * 60)) / 1000);
+			m = `${days}일 ${hours<10 ? '0':''}${hours}:${miniutes<10 ? '0':''}${miniutes}:${seconds<10 ? '0':''}${seconds}`
+			timerId.innerHTML =m;
+			if (RemainDate < 0) {
+				// 시간이 종료 되었으면..
+				clearInterval(timer);   // 타이머 해제
+			}else{
+				RemainDate = RemainDate - 1000; // 남은시간 -1초
+			}
+		}
+		var timer = setInterval(msg_time, 1000);
+		/*]]>*/
+		// 삭제 버튼을 위해서 만들었습니다.
+		/*<![CDATA[*/
+		function deletePost(pnum) {
+			if (confirm(pnum + "번 게시글을 삭제할까요?")) {
+				var uri = /*[[ @{/delete.do} ]]*/null;
+				var html = "";
+				html += '<form name="dataForm" action="'+uri+'" method="post">';
+				html += '<input type="hidden" name="pnum" value="'+pnum+'" />';
+				html += '</form>';
+				$("body").append(html);
+				document.dataForm.submit();
+			}
+		}
+		/*]]>*/
+
+	</script>
+  </th:block>
+  
+</html>

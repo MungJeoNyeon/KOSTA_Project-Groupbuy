@@ -2,7 +2,7 @@
 
 ## 프로젝트 설명 
 1인 가구를 위한 공동 구매 웹 플랫폼 
-
+ 
 |개발 환경|개발 언어 및 프레임워크|템플릿 엔진|라이브러리|데이터베이스|빌드 도구|기타|
 |---|---|---|---|---|---|---|
 |![Spring](https://img.shields.io/badge/STS4-6DB33F?style=flat-square&logo=Spring&logoColor=black)|![Java](https://img.shields.io/badge/Java-007396?style=flat-square&logo=Java&logoColor=white) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=HTML5&logoColor=white) ![CSS](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=CSS3&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=JavaScript&logoColor=black)|![Thymeleaf](https://img.shields.io/badge/Thymeleaf-005F0F?style=flat-square&logo=Thymeleaf&logoColor=white)|![Lombok](https://img.shields.io/badge/Lombok-red?style=flat-square&logo=Lombok&logoColor=white)|![Oracle](https://img.shields.io/badge/Oracle-F80000?style=flat-square&logo=Oracle&logoColor=white)|![Gradle](https://img.shields.io/badge/Gradle-02303A?style=flat-square&logo=Gradle&logoColor=white)|
